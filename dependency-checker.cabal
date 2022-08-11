@@ -26,7 +26,6 @@ source-repository head
 library
   exposed-modules:
       DependencyChecker
-      Lib
       Utils
   other-modules:
       Paths_dependency_checker
@@ -45,7 +44,7 @@ executable dependency-checker-exe
   other-modules:
       Paths_dependency_checker
   hs-source-dirs:
-      app
+      demo
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
