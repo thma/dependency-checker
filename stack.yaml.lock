@@ -3,7 +3,18 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    name: graphmod
+    version: 1.4.5
+    git: https://github.com/yav/graphmod.git
+    pantry-tree:
+      size: 2872
+      sha256: e1c6c335ece94f7509aeedf238ce39e700581f77685fc10ec5d2a3dd7e5f5e16
+    commit: 79cc6502b48e577632d57b3a9b479436b0739726
+  original:
+    git: https://github.com/yav/graphmod.git
+    commit: 79cc6502b48e577632d57b3a9b479436b0739726
 snapshots:
 - completed:
     size: 619164

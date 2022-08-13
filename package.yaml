@@ -22,9 +22,9 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 - filepath
-- haskell-lexer >= 1.0.2
 - directory
-- extra
+- extra               # Control.Monad.Extra (concatMapM)
+- graphmod >= 1.4.4
 
 library:
   source-dirs: src
