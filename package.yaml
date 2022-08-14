@@ -50,3 +50,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - dependency-checker
+    - hspec
+    - QuickCheck
+    - quickcheck-io
