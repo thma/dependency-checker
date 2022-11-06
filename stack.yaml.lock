@@ -5,20 +5,20 @@
 
 packages:
 - completed:
+    commit: 79cc6502b48e577632d57b3a9b479436b0739726
+    git: https://github.com/yav/graphmod.git
     name: graphmod
-    version: 1.4.5
-    git: https://github.com/yav/graphmod.git
     pantry-tree:
-      size: 2872
       sha256: e1c6c335ece94f7509aeedf238ce39e700581f77685fc10ec5d2a3dd7e5f5e16
-    commit: 79cc6502b48e577632d57b3a9b479436b0739726
+      size: 2872
+    version: 1.4.5
   original:
-    git: https://github.com/yav/graphmod.git
     commit: 79cc6502b48e577632d57b3a9b479436b0739726
+    git: https://github.com/yav/graphmod.git
 snapshots:
 - completed:
-    size: 619164
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/18.yaml
-    sha256: 65b9809265860e085b4f61d4eb00d5d73e41190693620385a69cc9d9df7a901d
+    sha256: e5f56f619132209b826084cacd6374d7f0344cc88a9d1d305878190e4204ae1f
+    size: 619205
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/31.yaml
   original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/18.yaml
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/19/31.yaml
