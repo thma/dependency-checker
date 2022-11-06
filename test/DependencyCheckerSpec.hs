@@ -2,13 +2,6 @@ module DependencyCheckerSpec where
 
 import Test.Hspec ( hspec, describe, it, shouldBe, Spec )
 import DependencyChecker
-    ( ModName,
-      ImpType(..),
-      Import(..),
-      fromHierarchy,
-      verifyCleanArchitectureDependencies,
-      formatLeftAsErrMsg,
-      allImportDeclarations )
 
 
 main :: IO ()
@@ -28,6 +21,6 @@ spec =
 bogusDependency :: (ModName, [Import])
 bogusDependency = (mod, [imp])
   where
-    mod =  (fromHierarchy ["Domain"],"ReservationDomain")
-    imp = Import { impMod = (fromHierarchy ["ExternalInterfaces"],"FileConfigProvider"), impType = NormalImp }
+    mod = moduleNamed "Domain.ReservationDomain"
+    imp = importNamed "ExternalInterfaces.FileConfigProvider"
 

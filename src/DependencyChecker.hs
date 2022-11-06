@@ -13,14 +13,15 @@ module DependencyChecker
     cleanArchitectureCompliantDeps,
     cleanArchitecturePackages,
     formatLeftAsErrMsg,
+    moduleNamed,
+    importNamed
   )
 where
 
-import           Control.Monad.Extra (concatMapM)
 import           Data.Either         (partitionEithers)
 import           Data.List           (intercalate)
-import           System.Directory
 import           Graphmod.Utils
+import           FileUtils           (ModuleImportDeclarations, allImportDeclarations, allFiles)
 
 -- | this type represents the package structure of a module e.g. Data.Time.Calendar resides in package Date.Time
 type Package = String
@@ -90,25 +91,22 @@ modulePackage (q, _m) = intercalate "." (qualifierNodes q)
 ppModule :: ModName -> String
 ppModule (q, m) = intercalate "." (qualifierNodes q ++ [m])
 
--- | this type represents the section of import declaration at the beginning of a Haskell module
-type ModuleImportDeclarations = (ModName, [Import])
+-- | creates a ModName instance from a String. '.' is interpreted as hierarchy separator.
+--   E.G. moduleNamed "Control.Monad.Extra" returns (Hierarchy ["Control","Monad"],"Extra")
+moduleNamed :: String -> ModName
+moduleNamed name =
+  let parts     = split name
+      hierarchy = init parts
+      modName   = last parts
+  in (fromHierarchy hierarchy, modName)
+  where
+    -- | splits a string into a list of strings, by using '.' as the splitting delimiter.
+    split :: String -> [String]
+    split str =
+      case break (== '.') str of
+        (a, _:b) -> a : split b
+        (a, _)   -> [a]
 
--- | scan all files under filepath 'dir' and return a list of all their import declarations.
-allImportDeclarations :: FilePath -> IO [ModuleImportDeclarations]
-allImportDeclarations dir = do
-  files <- allFiles dir
-  mapM parseFile files
-
--- | list all files in the given directory and recursively include all sub directories
-allFiles :: FilePath -> IO [FilePath]
-allFiles dir = do
-  files <- listDirectory dir
-  let qualifiedFiles = map (\f -> dir ++ "/" ++ f) files
-  concatMapM
-    ( \f -> do
-        isFile <- doesDirectoryExist f
-        if isFile
-          then allFiles f
-          else return [f]
-    )
-    qualifiedFiles
+-- | creates an Import instance from a String. The String is expected to represent a qualified module name.
+importNamed :: String -> Import
+importNamed name = Import {impMod = moduleNamed name, impType = NormalImp }

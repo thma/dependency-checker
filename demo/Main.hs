@@ -1,42 +1,70 @@
 module Main where
 
-import DependencyChecker
+import           DependencyChecker
 
 main :: IO ()
 main = do
-
-  print $ formatLeftAsErrMsg $ verifyCleanArchitectureDependencies [bogusDependency] 
+  print $ formatLeftAsErrMsg $ verifyCleanArchitectureDependencies [bogusDependency]
 
   print $ formatLeftAsErrMsg $ verifyCleanArchitectureDependencies [goodDependency]
 
   allImports <- allImportDeclarations "src"
- -- print allImports
+  -- print allImports
   print $ formatLeftAsErrMsg $ Left allImports
   print $ verifyAllDependencies dcPacks dcAllowed allImports
 
+-- print $
+--   onionArchitecture
+--     domainModels ["Domain"]
+--     useCase ["UseCases"]
+--     interfaceAdapters ["InterfaceAdapters"]
+--     externalInterfaces ["ExternalInterfaces"]
+
 dcPacks = ["", "Control.Monad", "Data", "System", "Graphmod"]
 
-dcAllowed = [("", "Control.Monad"), ("", "Data"), ("", "System"), ("","Graphmod")]
+dcAllowed = [("", "Control.Monad"), ("", "Data"), ("", "System"), ("", "Graphmod")]
+
+generalBlacklist :: [Package]
+generalBlacklist = ["System", "System.IO"]
+
+data PackageDeclaration = PackageDeclaration Package ExplicitImportRule
+
+data ExplicitImportRule = DenyAll | AllowAll | DenyExactly [Package] | AllowExactly [Package]
+
+data OnionArchitecture = OnionArchitecture
+  { domain    :: PackageDeclaration,
+    usecase   :: PackageDeclaration,
+    interface :: PackageDeclaration,
+    external  :: PackageDeclaration
+  }
+
+polysemyCleanArchitecture :: OnionArchitecture
+polysemyCleanArchitecture =
+  OnionArchitecture
+    { domain = PackageDeclaration "Domain" (DenyExactly generalBlacklist),
+      usecase = PackageDeclaration "UseCases" (DenyExactly generalBlacklist),
+      interface = PackageDeclaration "InterfaceAdapters" AllowAll,
+      external = PackageDeclaration "ExternalInterfaces" AllowAll
+    }
 
 dcDeps :: (ModName, [Import])
-dcDeps = (mod, [cm,de,dl,sd,gu]) 
+dcDeps = (mod, [cm, de, dl, sd, gu])
   where
-    mod = (fromHierarchy [],"DependencyChecker")
-    cm  = Import {impMod = (fromHierarchy ["Control", "Monad"],"Extra"), impType = NormalImp }
-    de  = Import {impMod = (fromHierarchy ["Data"],"Either"), impType = NormalImp}
-    dl  = Import {impMod = (fromHierarchy ["Data"],"List"), impType = NormalImp}
-    sd  = Import {impMod = (fromHierarchy ["System"],"Directory"), impType = NormalImp}
-    gu  = Import {impMod = (fromHierarchy ["Graphmod"],"Utils"), impType = NormalImp}
-
+    mod = moduleNamed "DependencyChecker"
+    cm = importNamed "Control.Monad.Extra"
+    de = importNamed "Data.Either"
+    dl = importNamed "Data.List"
+    sd = importNamed "System.Directory"
+    gu = importNamed "Graphmod.Utils"
 
 goodDependency :: (ModName, [Import])
 goodDependency = (mod, [imp])
   where
-    mod =  (fromHierarchy ["ExternalInterfaces"],"FileConfigProvider")
-    imp = Import { impMod = (fromHierarchy ["Domain"],"ReservationDomain"), impType = NormalImp }
+    mod = moduleNamed "ExternalInterfaces.FileConfigProvider"
+    imp = importNamed "Domain.ReservationDomain"
 
 bogusDependency :: (ModName, [Import])
 bogusDependency = (mod, [imp])
   where
-    mod =  (fromHierarchy ["Domain"],"ReservationDomain")
-    imp = Import { impMod = (fromHierarchy ["ExternalInterfaces"],"FileConfigProvider"), impType = NormalImp }  
+    mod = moduleNamed "Domain.ReservationDomain"
+    imp = importNamed "ExternalInterfaces.FileConfigProvider"
