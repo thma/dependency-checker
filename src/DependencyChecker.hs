@@ -11,29 +11,62 @@ module DependencyChecker
     ppModule,
     allFiles,
     cleanArchitectureCompliantDeps,
-    cleanArchitecturePackages,
+    --cleanArchitecturePackages,
     formatLeftAsErrMsg,
     moduleNamed,
-    importNamed
+    importNamed,
   )
 where
 
-import           Data.Either         (partitionEithers)
-import           Data.List           (intercalate)
+import           Data.Either    (partitionEithers)
+import           Data.List      (intercalate)
+import           FileUtils      (ModuleImportDeclarations, allFiles,
+                                 allImportDeclarations)
 import           Graphmod.Utils
-import           FileUtils           (ModuleImportDeclarations, allImportDeclarations, allFiles)
 
 -- | this type represents the package structure of a module e.g. Data.Time.Calendar resides in package Date.Time
 type Package = String
 
+generalBlacklist :: [Package]
+generalBlacklist = ["System", "System.IO"]
+
+data PackageDeclaration = PackageDeclaration
+  { package    :: Package,
+    importRule :: ExplicitImportRule
+  }
+
+data ExplicitImportRule = DenyAll | AllowAll | DenyExactly [Package] | AllowExactly [Package]
+
+data OnionArchitecture = OnionArchitecture
+  { domain    :: PackageDeclaration,
+    usecase   :: PackageDeclaration,
+    interface :: PackageDeclaration,
+    external  :: PackageDeclaration
+  }
+
+defaultCleanArchitecture :: OnionArchitecture
+defaultCleanArchitecture =
+  OnionArchitecture
+    { domain = PackageDeclaration "Domain" (DenyExactly generalBlacklist),
+      usecase = PackageDeclaration "UseCases" (DenyExactly generalBlacklist),
+      interface = PackageDeclaration "InterfaceAdapters" AllowAll,
+      external = PackageDeclaration "ExternalInterfaces" AllowAll
+    }
+
+-- | the list of source packages in descending order from outermost to innermost package for an onion architecture.
+onionPackages :: OnionArchitecture -> [Package]
+onionPackages OnionArchitecture {domain = dom, usecase = uc, interface = intf, external = ext} =
+  [package ext, package intf, package uc, package dom]
+
 -- | verify a list of ModuleImportDeclarations to comply to the clean architecture dependency rules.
 verifyCleanArchitectureDependencies :: [ModuleImportDeclarations] -> Either [ModuleImportDeclarations] ()
 verifyCleanArchitectureDependencies =
-  verifyAllDependencies
-    cleanArchitecturePackages
-    (cleanArchitectureCompliantDeps cleanArchitecturePackages)
+  let cleanArchitecturePackages = onionPackages defaultCleanArchitecture
+   in verifyAllDependencies
+        cleanArchitecturePackages
+        (cleanArchitectureCompliantDeps cleanArchitecturePackages)
 
--- | Right () is returned unchanged, 
+-- | Right () is returned unchanged,
 --   Left imports will be rendered as a human readable error message.
 --   This function may be handy in test cases.
 formatLeftAsErrMsg :: Either [ModuleImportDeclarations] () -> Either [String] ()
@@ -42,10 +75,6 @@ formatLeftAsErrMsg (Left imports) = Left (map toString imports)
   where
     toString :: ModuleImportDeclarations -> String
     toString (modName, imports) = ppModule modName ++ " imports " ++ intercalate ", " (map (ppModule . impMod) imports)
-
--- | the list of source packages in descending order from outermost to innermost package in our CleanArchitecture project
-cleanArchitecturePackages :: [Package]
-cleanArchitecturePackages = ["ExternalInterfaces", "InterfaceAdapters", "UseCases", "Domain"]
 
 -- | for a given list of packages this function produces the set of all allowed dependency pairs between packages.
 --   Allowed dependencies according to CleanArchitecture:
@@ -95,18 +124,17 @@ ppModule (q, m) = intercalate "." (qualifierNodes q ++ [m])
 --   E.G. moduleNamed "Control.Monad.Extra" returns (Hierarchy ["Control","Monad"],"Extra")
 moduleNamed :: String -> ModName
 moduleNamed name =
-  let parts     = split name
+  let parts = split name
       hierarchy = init parts
-      modName   = last parts
-  in (fromHierarchy hierarchy, modName)
+      modName = last parts
+   in (fromHierarchy hierarchy, modName)
   where
-    -- | splits a string into a list of strings, by using '.' as the splitting delimiter.
     split :: String -> [String]
     split str =
       case break (== '.') str of
-        (a, _:b) -> a : split b
-        (a, _)   -> [a]
+        (a, _ : b) -> a : split b
+        (a, _)     -> [a]
 
 -- | creates an Import instance from a String. The String is expected to represent a qualified module name.
 importNamed :: String -> Import
-importNamed name = Import {impMod = moduleNamed name, impType = NormalImp }
+importNamed name = Import {impMod = moduleNamed name, impType = NormalImp}

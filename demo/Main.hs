@@ -24,29 +24,6 @@ dcPacks = ["", "Control.Monad", "Data", "System", "Graphmod"]
 
 dcAllowed = [("", "Control.Monad"), ("", "Data"), ("", "System"), ("", "Graphmod")]
 
-generalBlacklist :: [Package]
-generalBlacklist = ["System", "System.IO"]
-
-data PackageDeclaration = PackageDeclaration Package ExplicitImportRule
-
-data ExplicitImportRule = DenyAll | AllowAll | DenyExactly [Package] | AllowExactly [Package]
-
-data OnionArchitecture = OnionArchitecture
-  { domain    :: PackageDeclaration,
-    usecase   :: PackageDeclaration,
-    interface :: PackageDeclaration,
-    external  :: PackageDeclaration
-  }
-
-polysemyCleanArchitecture :: OnionArchitecture
-polysemyCleanArchitecture =
-  OnionArchitecture
-    { domain = PackageDeclaration "Domain" (DenyExactly generalBlacklist),
-      usecase = PackageDeclaration "UseCases" (DenyExactly generalBlacklist),
-      interface = PackageDeclaration "InterfaceAdapters" AllowAll,
-      external = PackageDeclaration "ExternalInterfaces" AllowAll
-    }
-
 dcDeps :: (ModName, [Import])
 dcDeps = (mod, [cm, de, dl, sd, gu])
   where
